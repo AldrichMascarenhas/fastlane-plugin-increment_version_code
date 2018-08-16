@@ -48,9 +48,9 @@ module Fastlane
 
                 oldArr = newVersion.split('.').map{|v| v.to_i}
 
-                versionMajor = {oldArr[0]}
-                versionMinor = {oldArr[1]}
-                versionPatch = {oldArr[2]}
+                newversionMajor = {oldArr[0]}
+                newversionMinor = {oldArr[1]}
+                newversionPatch = {oldArr[2]}
 
                 foundVersionCodeMajor = "false"
                 foundVersionCodeMinor = "false"
@@ -65,7 +65,14 @@ module Fastlane
                             UI.message(" -> line: (#{line})!")
 
                           puts 'line is ' + line
+
+
                           versionComponents = line.strip.split(' ')
+
+
+                          puts 'versionComponents is ' + versionComponents
+
+                          
                           version_code = versionComponents[versionComponents.length-1].tr("\"","")
                           if new_version_code <= 0
                               new_version_code = version_code.to_i + 1
