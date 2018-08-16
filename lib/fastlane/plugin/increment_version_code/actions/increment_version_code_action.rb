@@ -8,6 +8,7 @@ module Fastlane
 
         version_code = "0"
         new_version_code ||= params[:version_code]
+            UI.message("The increment_version_code plugin will use #{new_version_code}")
 
 
         gradle_file_path ||= params[:gradle_file_path]
@@ -38,7 +39,7 @@ module Fastlane
         return new_version_code
       end
 
-      def incrementVersion(path, newVersion)
+      def self.incrementVersion(path, newVersion)
 
             if !File.file?(path)
                 UI.message(" -> No file exist at path: (#{path})!")
@@ -48,9 +49,9 @@ module Fastlane
 
                 oldArr = newVersion.split('.').map{|v| v.to_i}
 
-                newversionMajor = {oldArr[0]}
-                newversionMinor = {oldArr[1]}
-                newversionPatch = {oldArr[2]}
+                newversionMajor = oldArr[0].to_s
+                newversionMinor = oldArr[1].to_s
+                newversionPatch = oldArr[2].to_s
 
                 foundVersionCodeMajor = "false"
                 foundVersionCodeMinor = "false"
@@ -61,29 +62,48 @@ module Fastlane
                 File.open(path, 'r') do |file|
                     file.each_line do |line|
 
-                        if line.include? versionMajor and foundVersionCodeMajor=="false"
+                        if line.include? "versionMajor" and foundVersionCodeMajor=="false"
                             UI.message(" -> line: (#{line})!")
 
-                          puts 'line is ' + line
 
+                          line.replace line.sub(/\d+/, newversionMajor)
+                        
+                          foundVersionCodeMajor = "true"
+                           UI.message(" ->new  line: (#{line})!")
 
-                          versionComponents = line.strip.split(' ')
-
-
-                          puts 'versionComponents is ' + versionComponents
 
                           
-                          version_code = versionComponents[versionComponents.length-1].tr("\"","")
-                          if new_version_code <= 0
-                              new_version_code = version_code.to_i + 1
-                          end
-                          if !!(version_code =~ /\A[-+]?[0-9]+\z/)
-                              line.replace line.sub(version_code, new_version_code.to_s)
-                              foundVersionCode = "true"
-                          end
                           temp_file.puts line
+
+                        elsif line.include? "versionMinor" and foundVersionCodeMinor=="false"
+                            UI.message(" -> line: (#{line})!")
+
+                          line.replace line.sub(/\d+/, newversionMinor)
+                        
+                          foundVersionCodeMinor = "true"
+
+                           UI.message(" ->new  line: (#{line})!")
+
+                          
+                          temp_file.puts line
+
+                        elsif line.include? "versionPatch" and foundVersionCodePatch=="false"
+                              UI.message(" -> line: (#{line})!")
+
+
+                          line.replace line.sub(/\d+/, newversionPatch)
+                        
+
+                          foundVersionCodePatch = "true"
+                      
+                          UI.message(" ->new  line: (#{line})!")
+
+    
+                          temp_file.puts line
+                            
                         else
-                        temp_file.puts line
+                          temp_file.puts line
+
                      end
                 end
                 file.close
@@ -93,8 +113,8 @@ module Fastlane
               FileUtils.mv(temp_file.path, path)
               temp_file.unlink
             end
-            if foundVersionCode == "true"
-                return new_version_code
+            if foundVersionCodeMajor == "true" && foundVersionCodeMinor == "true" && foundVersionCodePatch
+                return newVersion
             end
             return -1
       end
@@ -109,12 +129,6 @@ module Fastlane
 
       def self.available_options
           [
-              FastlaneCore::ConfigItem.new(key: :app_folder_name,
-                                      env_name: "INCREMENTVERSIONCODE_APP_FOLDER_NAME",
-                                   description: "The name of the application source folder in the Android project (default: app)",
-                                      optional: true,
-                                          type: String,
-                                 default_value:"app"),
              FastlaneCore::ConfigItem.new(key: :gradle_file_path,
                                      env_name: "INCREMENTVERSIONCODE_GRADLE_FILE_PATH",
                                   description: "The relative path to the gradle file containing the version code parameter (default:app/build.gradle)",
@@ -125,14 +139,8 @@ module Fastlane
                                       env_name: "INCREMENTVERSIONCODE_VERSION_CODE",
                                    description: "Change to a specific version (optional)",
                                       optional: true,
-                                          type: Integer,
-                                 default_value: 0),
-              FastlaneCore::ConfigItem.new(key: :ext_constant_name,
-                                      env_name: "INCREMENTVERSIONCODE_EXT_CONSTANT_NAME",
-                                   description: "If the version code is set in an ext constant, specify the constant name (optional)",
-                                      optional: true,
                                           type: String,
-                                 default_value: "versionCode")
+                                 default_value: "fail")
           ]
       end
 
